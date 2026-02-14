@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialogue Match Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap');
+
+        :root {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --primary-text: #1e293b;
+            --title-color: #0e7490;
+            --btn-grad: linear-gradient(145deg, #22d3ee, #0e7490);
+            --btn-shadow: #064e62;
+            --correct-color: #10b981;
+            --error-color: #f43f5e;
+            --progress-bg: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            display: grid;
+            place-items: center;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .game-card {
+            background-color: var(--card-bg);
+            border-radius: 32px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 380px;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            position: relative;
+        }
+
+        .copyright-notice {
+            font-size: 8px;
+            color: var(--card-bg);
+            user-select: text;
+            height: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--title-color);
+            margin-bottom: 15px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .matching-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+            justify-content: center;
+        }
+        
+        /* --- ИЗМЕНЕНИЯ ЗДЕСЬ --- */
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Уменьшен отступ */
+        }
+
+        .nav-btn {
+            background: var(--btn-grad);
+            border: none;
+            width: 36px;   /* Кнопка стала уже */
+            height: 36px;  /* Кнопка стала ниже */
+            border-radius: 10px; /* Слегка уменьшен радиус для гармонии */
+            color: white;
+            font-size: 22px; /* Чуть уменьшен размер иконки */
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 0 var(--btn-shadow);
+            transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        /* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
+
+        .nav-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--btn-shadow);
+        }
+        
+        /* --- ИЗМЕНЕНИЯ ЗДЕСЬ --- */
+        .phrase-box {
+            flex-grow: 1;
+            background: #f8fafc;
+            border: 2px solid #f1f5f9;
+            border-radius: 16px;
+            height: 80px;  /* Увеличена высота для гарантии */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            font-size: 19px;   /* Оптимальный размер шрифта */
+            font-weight: 800;
+            color: var(--primary-text);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.2;
+            overflow: hidden;
+            text-align: center;
+        }
+        /* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
+
+        .check-correct {
+            border-color: var(--correct-color) !important;
+            background-color: #ecfdf5 !important;
+            color: var(--correct-color) !important;
+            transform: scale(1.03);
+        }
+
+        .check-error {
+            border-color: var(--error-color) !important;
+            background-color: #fff1f2 !important;
+            color: var(--error-color) !important;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .actions {
+            margin: 15px 0;
+        }
+
+        .check-btn {
+            background: var(--btn-grad);
+            color: white;
+            border: none;
+            padding: 16px 0;
+            font-size: 20px;
+            font-weight: 800;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 6px 20px rgba(14, 116, 144, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .check-btn:active { transform: scale(0.98); }
+
+        .check-btn.btn-correct { background: var(--correct-color) !important; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); }
+        .check-btn.btn-error { background: var(--error-color) !important; box-shadow: 0 6px 20px rgba(244, 63, 94, 0.3); }
+
+        .progress-container {
+            width: 100%;
+            height: 36px;
+            background: var(--progress-bg);
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: var(--correct-color);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 17px;
+            transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease;
+            white-space: nowrap;
+            min-width: 45px;
+        }
+
+        .bar-error {
+            background-color: var(--error-color) !important;
+        }
+
+        #completion-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        #restart-btn {
+            background: var(--btn-grad);
+            border: none;
+            border-radius: 50%;
+            width: 68px;
+            height: 68px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25px;
+            box-shadow: 0 6px 20px rgba(14, 116, 144, 0.3);
+            transition: transform 0.3s ease;
+        }
+        #restart-btn:hover { transform: rotate(-90deg); }
+        #restart-btn svg { width: 34px; height: 34px; fill: white; }
+    </style>
+</head>
+<body>
+
+    <div class="game-card">
+        <div id="game-ui" style="display: flex; flex-direction: column; height: 100%;">
+            <p class="copyright-notice">Created by Vladislav Isangalin. Copyright.</p>
+            <h1>Dialogue Match</h1>
+
+            <div class="matching-area">
+                <div class="row">
+                    <button class="nav-btn" onclick="changePhrase('A', -1)">‹</button>
+                    <div class="phrase-box" id="box-A"></div>
+                    <button class="nav-btn" onclick="changePhrase('A', 1)">›</button>
+                </div>
+
+                <div class="row">
+                    <button class="nav-btn" onclick="changePhrase('B', -1)">‹</button>
+                    <div class="phrase-box" id="box-B"></div>
+                    <button class="nav-btn" onclick="changePhrase('B', 1)">›</button>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="check-btn" id="check-btn" onclick="checkMatch()">Check</button>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar">0%</div>
+            </div>
+        </div>
+
+        <div id="completion-screen">
+            <h1 style="font-size: 34px; margin-bottom: 5px; color: var(--correct-color);">Perfect!</h1>
+            <p style="font-size: 18px; font-weight: 700; color: #64748b; margin-bottom: 25px;">Final efficiency:</p>
+            <div class="progress-container" style="width: 85%;">
+                <div class="progress-bar" id="final-progress-bar">0%</div>
+            </div>
+            <button id="restart-btn" onclick="resetGame()">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const initialDialogues = [
+            { q: "What is this?", a: "This is my new phone." },
+            { q: "What is that?", a: "That is a plane in the sky." },
+            { q: "What are these?", a: "These are my house keys." },
+            { q: "What are those?", a: "Those are black birds on the tree." },
+            { q: "Where is the book?", a: "It is on your desk." },
+            { q: "Where are the gloves?", a: "Your gloves are in your pocket." },
+            { q: "Is there a box in the room?", a: "Yes, there is a big box in the corner." },
+            { q: "Are there people in the park?", a: "Yes, there are many people in the park today." },
+            { q: "What is there in your bag?", a: "There is a wallet and a passport in my bag." },
+            { q: "How many chairs are there?", a: "There are only four chairs in the room." }
+        ];
+
+        let availablePairs = [];
+        let listA = [];
+        let listB = [];
+        let indexA = 0, indexB = 0;
+        let totalCount = initialDialogues.length;
+        let isProcessing = false;
+        
+        let currentProgressPercent = 0;
+        let drainInterval = null;
+
+        const boxA = document.getElementById('box-A');
+        const boxB = document.getElementById('box-B');
+        const checkBtn = document.getElementById('check-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const finalProgressBar = document.getElementById('final-progress-bar');
+        const gameUI = document.getElementById('game-ui');
+        const completionScreen = document.getElementById('completion-screen');
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function initLevel() {
+            if (availablePairs.length === 0) {
+                showCompletion();
+                return;
+            }
+
+            listA = shuffle([...availablePairs.map(p => ({ text: p.q, id: p.id }))]);
+            listB = shuffle([...availablePairs.map(p => ({ text: p.a, id: p.id }))]);
+            
+            indexA = Math.floor(Math.random() * listA.length);
+            indexB = Math.floor(Math.random() * listB.length);
+
+            if (listA.length > 1 && listA[indexA].id === listB[indexB].id) {
+                indexB = (indexB + 1) % listB.length;
+            }
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            boxA.textContent = listA[indexA].text;
+            boxB.textContent = listB[indexB].text;
+            boxA.classList.remove('check-correct', 'check-error');
+            boxB.classList.remove('check-correct', 'check-error');
+            checkBtn.classList.remove('btn-correct', 'btn-error');
+            checkBtn.textContent = "Check";
+        }
+
+        function changePhrase(row, dir) {
+            if (isProcessing) return;
+            if (row === 'A') indexA = (indexA + dir + listA.length) % listA.length;
+            else indexB = (indexB + dir + listB.length) % listB.length;
+            updateDisplay();
+        }
+
+        function checkMatch() {
+            if (isProcessing) return;
+            const idA = listA[indexA].id;
+            const idB = listB[indexB].id;
+
+            if (idA === idB) {
+                isProcessing = true;
+                boxA.classList.add('check-correct');
+                boxB.classList.add('check-correct');
+                checkBtn.classList.add('btn-correct');
+                checkBtn.textContent = "Correct!";
+                
+                currentProgressPercent += (100 / totalCount);
+                if(currentProgressPercent > 100) currentProgressPercent = 100;
+                syncProgressBar();
+
+                setTimeout(() => {
+                    availablePairs = availablePairs.filter(p => p.id !== idA);
+                    isProcessing = false;
+                    initLevel();
+                }, 700);
+            } else {
+                isProcessing = true;
+                boxA.classList.add('check-error');
+                boxB.classList.add('check-error');
+                checkBtn.classList.add('btn-error');
+                
+                currentProgressPercent -= 5;
+                if(currentProgressPercent < 0) currentProgressPercent = 0;
+                progressBar.classList.add('bar-error');
+                syncProgressBar();
+
+                setTimeout(() => {
+                    progressBar.classList.remove('bar-error');
+                    isProcessing = false;
+                    updateDisplay();
+                }, 600);
+            }
+        }
+
+        function syncProgressBar() {
+            const displayVal = Math.round(currentProgressPercent);
+            progressBar.style.width = currentProgressPercent + '%';
+            progressBar.textContent = displayVal + '%';
+            
+            finalProgressBar.style.width = currentProgressPercent + '%';
+            finalProgressBar.textContent = displayVal + '%';
+        }
+
+        function startDraining() {
+            if(drainInterval) clearInterval(drainInterval);
+            drainInterval = setInterval(() => {
+                if (currentProgressPercent > 0 && !isProcessing && availablePairs.length > 0) {
+                    currentProgressPercent -= 0.009; 
+                    if (currentProgressPercent < 0) currentProgressPercent = 0;
+                    syncProgressBar();
+                }
+            }, 100);
+        }
+
+        function showCompletion() {
+            gameUI.style.display = 'none';
+            completionScreen.style.display = 'flex';
+            clearInterval(drainInterval);
+        }
+
+        function resetGame() {
+            availablePairs = initialDialogues.map((d, i) => ({ ...d, id: i }));
+            currentProgressPercent = 0;
+            syncProgressBar();
+            gameUI.style.display = 'flex';
+            completionScreen.style.display = 'none';
+            initLevel();
+            startDraining();
+        }
+
+        resetGame();
+    </script>
+</body>
+</html>
